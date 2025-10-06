@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="64" height="64" aria-hidden="true">
+  <defs>
+    <linearGradient id="dt-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6c63ff"/>
+      <stop offset="100%" stop-color="#00d4aa"/>
+    </linearGradient>
+    <filter id="dt-glow">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <circle cx="60" cy="60" r="52" fill="none" stroke="url(#dt-grad)" stroke-width="6"/>
+  <circle cx="60" cy="60" r="46" fill="#0d0d0d" stroke="#172026" stroke-width="2"/>
+
+  <g>
+    <rect x="26" y="74" width="6" height="8"  rx="2" fill="#6c63ff" opacity="0.95"/>
+    <rect x="37" y="68" width="6" height="14" rx="2" fill="#7c73ff" opacity="0.95"/>
+    <rect x="48" y="60" width="6" height="22" rx="2" fill="#8b85ff" opacity="0.95"/>
+    <rect x="59" y="50" width="6" height="32" rx="2" fill="url(#dt-grad)" opacity="0.98" filter="url(#dt-glow)"/>
+    <rect x="70" y="41" width="6" height="41" rx="2" fill="#45b7d1" opacity="0.98"/>
+    <rect x="81" y="33" width="6" height="49" rx="2" fill="#00b894" opacity="0.98"/>
+    <rect x="92" y="24" width="6" height="58" rx="2" fill="#00d4aa" opacity="0.98"/>
+  </g>
+</svg>

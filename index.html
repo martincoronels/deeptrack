@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepTrack</title>
+        <!-- Favicon SVG -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <!-- Favicon PNG de respaldo -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0d0d0d;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #262626;
+            --accent: #6c63ff;
+            --accent-light: #8b85ff;
+            --success: #00d4aa;
+            --warning: #ffaa00;
+            --danger: #ff4444;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border: #333333;
+            --pending: #9ca3af;       
+            --pending-dark: #6b7280;
+            
+            /* Colores para sesiones */
+            --color-1: #ff6b6b;
+            --color-2: #4ecdc4;
+            --color-3: #45b7d1;
+            --color-4: #f9ca24;
+            --color-5: #6c5ce7;
+            --color-6: #a29bfe;
+            --color-7: #fd79a8;
+            --color-8: #00b894;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(108, 99, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 212, 170, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .glass-card {
+            background: rgba(26, 26, 26, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.05),
+                transparent
+            );
+            transition: left 0.5s ease;
+            border-radius: inherit;
+        }
+
+        .glass-card:hover::before {
+            left: 100%;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, transparent 100%);
+            border-radius: 20px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, rgba(38, 38, 38, 0.5) 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .progress-bar-custom {
+            background: var(--bg-tertiary);
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--accent-light) 100%);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .calendar-container {
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+
+        .day-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-title {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: white;
+            font-weight: 700;
+            padding: 12px 14px;
+            text-align: center;
+        }
+
+        .day-column {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 60px;
+        }
+
+        .session-block {
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            position: relative;
+        }
+
+        .session-block:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .session-block.completed {
+            opacity: 0.8;
+        }
+
+        .session-block.completed::after {
+            content: '✅';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2rem;
+            color: var(--success);
+        }
+
+        .session-block.missed {
+            opacity: 0.7;
+            border: 2px solid var(--danger);
+        }
+
+        .session-block.missed::after {
+            content: '❌';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2rem;
+            color: var(--danger);
+        }
+
+        /* Color Picker Styles */
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: white;
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        /* Subject Time Tracker */
+        .subject-tracker {
+            display: grid;
+            gap: 15px;
+        }
+
+        .subject-item {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .subject-item:hover {
+            transform: translateX(10px);
+        }
+
+        .subject-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .subject-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+        }
+
+        .subject-details h5 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .subject-details p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .subject-time {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        /* Reward Configuration */
+        .reward-item {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid var(--border);
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .reward-progress {
+            background: var(--bg-primary);
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .reward-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, #00a884 100%);
+            transition: width 0.5s ease;
+        }
+
+        .delete-reward {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* Session Details Modal */
+        .session-details {
+            padding: 20px;
+        }
+
+        .session-color-indicator {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-custom {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(108, 99, 255, 0.3);
+            color: white;
+        }
+
+        .btn-danger-custom {
+            background: linear-gradient(135deg, var(--danger) 0%, #cc0000 100%);
+            color: white;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border);
+        }
+
+        .form-control, .form-select {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.25);
+        }
+
+        .achievement-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: var(--bg-primary);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-weight: bold;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .motivational-message {
+            background: linear-gradient(135deg, rgba(108, 99, 255, 0.2) 0%, rgba(0, 212, 170, 0.2) 100%);
+            border-left: 4px solid var(--accent);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--success) 0%, #00a884 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, var(--danger) 0%, #cc0000 100%);
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .btn-mobile-text {
+                display: none;
+            }
+            
+            .btn-custom.btn-sm {
+                padding: 10px 15px;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .calendar-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .glass-card {
+                padding: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+            
+            .calendar-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                align-items: start;
+            }
+
+            .calendar-grid > .day-card:last-child:nth-child(odd) {
+                grid-column: 1 / -1;
+                justify-self: center;
+                width: 50%;
+            }
+        }
+
+        .floating-add-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.4);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .floating-add-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1 style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:2.8rem;font-weight:800;background:linear-gradient(135deg,#6c63ff 0%,#00d4aa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="64" height="64" aria-hidden="true">
+                    <defs>
+                    <linearGradient id="dt-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#6c63ff"/>
+                        <stop offset="100%" stop-color="#00d4aa"/>
+                    </linearGradient>
+                    <filter id="dt-glow">
+                        <feGaussianBlur stdDeviation="2.2" result="b"/>
+                        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    </defs>
+
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="url(#dt-grad)" stroke-width="6"/>
+                    <!-- Disco interior oscuro -->
+                    <circle cx="60" cy="60" r="46" fill="#0d0d0d" stroke="#172026" stroke-width="2"/>
+
+                    <g>
+                    <rect x="26" y="74" width="6" height="8"  rx="2" fill="#6c63ff" opacity="0.95"/>
+                    <rect x="37" y="68" width="6" height="14" rx="2" fill="#7c73ff" opacity="0.95"/>
+                    <rect x="48" y="60" width="6" height="22" rx="2" fill="#8b85ff" opacity="0.95"/>
+                    <rect x="59" y="50" width="6" height="32" rx="2" fill="url(#dt-grad)" opacity="0.98" filter="url(#dt-glow)"/>
+                    <rect x="70" y="41" width="6" height="41" rx="2" fill="#45b7d1" opacity="0.98"/>
+                    <rect x="81" y="33" width="6" height="49" rx="2" fill="#00b894" opacity="0.98"/>
+                    <rect x="92" y="24" width="6" height="58" rx="2" fill="#00d4aa" opacity="0.98"/>
+                    </g>
+
+                </svg>
+                DeepTrack
+            </h1>
+
+            <p class="text-secondary">Domina tu rutina, conquista tu futuro</p>
+
+        </div>
+
+        <!-- Stats Dashboard -->
+        <div class="glass-card">
+            <h3 class="mb-4"><i class="fas fa-chart-line"></i> Tu Progreso</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-fire" style="color: var(--warning); font-size: 2rem;"></i>
+                    <div class="stat-number" id="streakDays">0</div>
+                    <div class="text-secondary">Días de racha</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-check-circle" style="color: var(--success); font-size: 2rem;"></i>
+                    <div class="stat-number" id="completedSessions">0</div>
+                    <div class="text-secondary">Sesiones completadas</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-week" style="color: var(--accent); font-size: 2rem;"></i>
+                    <div class="stat-number" id="completedWeeks">0</div>
+                    <div class="text-secondary">Semanas completadas</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-trophy" style="color: #ffd700; font-size: 2rem;"></i>
+                    <div class="stat-number" id="achievements">0</div>
+                    <div class="text-secondary">Logros</div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mt-4">
+                <h5>Progreso Semanal</h5>
+                <div class="progress-bar-custom">
+                    <div class="progress-fill" id="weeklyProgress" style="width: 0%;">
+                        <span id="weeklyProgressText">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motivational Message -->
+            <div class="motivational-message" id="motivationalMessage">
+                <i class="fas fa-quote-left"></i> 
+                <span id="motivationalText">¡Construí el mañana con lo que hacés hoy! Cada sesión cuenta.</span>
+                <i class="fas fa-quote-right"></i>
+            </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="fas fa-calendar-alt"></i> Calendario Semanal</h3>
+                <button class="btn btn-custom" onclick="openAddSessionModal()">
+                    <i class="fas fa-plus"></i> Nueva Sesión
+                </button>
+            </div>
+            
+            <div class="calendar-container">
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Calendar will be generated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject Time Tracker -->
+        <div class="glass-card">
+            <h3 class="mb-4"><i class="fas fa-clock"></i> Tiempo por Sesion</h3>
+            <div class="subject-tracker" id="subjectTracker">
+                <!-- Subject times will be displayed here -->
+            </div>
+        </div>
+
+        <!-- Rewards Configuration -->
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="fas fa-gift"></i> Recompensas</h3>
+                <button class="btn btn-custom btn-sm" onclick="openAddRewardModal()">
+                    <i class="fas fa-plus"></i> <span class="btn-mobile-text">Nueva Recompensa</span>
+                </button>
+            </div>
+            <div id="rewardsList">
+                <!-- Custom rewards will be displayed here -->
+            </div>
+        </div>
+
+        <!-- Achievements Section -->
+        <div class="glass-card">
+            <h3 class="mb-4"><i class="fas fa-award"></i> Logros Desbloqueados</h3>
+            <div id="achievementsList">
+                <!-- Achievements will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Add Button -->
+    <div class="floating-add-btn" onclick="openAddSessionModal()">
+        <i class="fas fa-plus"></i>
+    </div>
+
+    <!-- Add Session Modal -->
+    <div class="modal fade" id="addSessionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Sesión</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="sessionForm">
+                        <div class="mb-3">
+                            <label class="form-label">Sesion</label>
+                            <input type="text" class="form-control" id="subject" required placeholder="Ej: Aprender Guitarra">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="description" rows="3" placeholder="Notas adicionales sobre la sesión..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Color</label>
+                            <div class="color-picker" id="colorPicker">
+                                <div class="color-option" style="background: #ff6b6b" data-color="#ff6b6b"></div>
+                                <div class="color-option" style="background: #4ecdc4" data-color="#4ecdc4"></div>
+                                <div class="color-option" style="background: #45b7d1" data-color="#45b7d1"></div>
+                                <div class="color-option" style="background: #f9ca24" data-color="#f9ca24"></div>
+                                <div class="color-option" style="background: #6c5ce7" data-color="#6c5ce7"></div>
+                                <div class="color-option" style="background: #a29bfe" data-color="#a29bfe"></div>
+                                <div class="color-option" style="background: #fd79a8" data-color="#fd79a8"></div>
+                                <div class="color-option" style="background: #00b894" data-color="#00b894"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Día</label>
+                            <select class="form-select" id="day" required>
+                                <option value="1">Lunes</option>
+                                <option value="2">Martes</option>
+                                <option value="3">Miércoles</option>
+                                <option value="4">Jueves</option>
+                                <option value="5">Viernes</option>
+                                <option value="6">Sábado</option>
+                                <option value="0">Domingo</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Hora de inicio</label>
+                            <input type="time" class="form-control" id="startTime" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Duración (minutos)</label>
+                            <input type="number" class="form-control" id="duration" min="15" value="60" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-custom" onclick="addSession()">Agregar Sesión</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Details Modal -->
+    <div class="modal fade" id="sessionDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles de la Sesión</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body session-details" id="sessionDetailsContent">
+                    <!-- Session details will be displayed here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger-custom" onclick="deleteSession()" id="deleteSessionBtn">
+                        <i class="fas fa-trash"></i> Eliminar Sesión
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Reward Modal -->
+    <div class="modal fade" id="addRewardModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Recompensa Personalizada</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="rewardForm">
+                        <div class="mb-3">
+                            <label class="form-label">Sesion</label>
+                            <input type="text" class="form-control" id="rewardSubject" required placeholder="Ej: Aprender Guitarra">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Horas semanales requeridas</label>
+                            <input type="number" class="form-control" id="rewardHours" min="1" value="7" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Recompensa</label>
+                            <textarea class="form-control" id="rewardText" rows="3" required placeholder="Ej: Te mereces un helado de chocolate y vainilla de BurgerKing"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-custom" onclick="addReward()">Agregar Recompensa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <div class="text-center my-4">
+    <button class="btn btn-danger-custom btn-sm" onclick="resetAllData()">
+        <i class="fas fa-rotate-left"></i>
+        <span class="btn-mobile-text"> Restablecer progreso</span>
+    </button>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Data Management
+        let sessions = [];
+        let completedSessions = [];
+        let achievements = [];
+        let rewards = [];
+        let subjectColors = {};
+        let selectedColor = '#ff6b6b';
+        let currentViewingSessionId = null;
+        let stats = {
+            streak: 0,
+            totalCompleted: 0,
+            completedWeeks: 0,
+            lastCompletedDate: null,
+            weekCompletionHistory: []
+        };
+
+        const motivationalQuotes = [
+            "Hacé hoy lo que mañana te libera.",
+            "El esfuerzo de ahora es el descanso de mañana.",
+            "Concentrate hoy; agradecete mañana.",
+            "Lo que sembrás hoy es lo que disfrutás mañana.",
+            "Menos distracciones hoy, más libertad mañana.",
+            "Un enfoque hoy, mil opciones mañana.",
+            "Hoy construís el mañana que querés vivir.",
+            "Hacelo ahora; tu yo de mañana te lo va a agradecer.",
+            "La constancia de hoy abre puertas mañana.",
+            "Cada minuto de hoy compra horas libres mañana.",
+            "Primero el foco, después la recompensa.",
+            "Elegí el esfuerzo hoy para elegir con calma mañana.",
+            "Hoy disciplina, mañana tranquilidad.",
+            "Avanzá ahora para disfrutar después.",
+            "Invertí atención hoy, cobrala en resultados mañana.",
+            "Lo difícil hoy hace fácil el mañana.",
+            "Cerrá las apps hoy, abrí oportunidades mañana.",
+            "Hacé espacio hoy para disfrutar mañana."
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            checkAndCleanWeek();
+            generateCalendar();
+            updateStats();
+            updateSubjectTracker();
+            updateRewardsList();
+            checkCurrentSession();
+            setupColorPicker();
+            setInterval(checkCurrentSession, 60000); // Check every minute
+        });
+
+        // Setup color picker
+        function setupColorPicker() {
+            const colorOptions = document.querySelectorAll('.color-option');
+            colorOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    colorOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedColor = this.dataset.color;
+                });
+            });
+            // Select first color by default
+            colorOptions[0].classList.add('selected');
+        }
+
+        // Load data from localStorage
+        function loadData() {
+            const savedSessions = localStorage.getItem('studySessions');
+            const savedCompleted = localStorage.getItem('completedSessions');
+            const savedStats = localStorage.getItem('studyStats');
+            const savedAchievements = localStorage.getItem('achievements');
+            const savedRewards = localStorage.getItem('customRewards');
+            const savedSubjectColors = localStorage.getItem('subjectColors');
+
+            if (savedSessions) {
+                try {
+                    const raw = JSON.parse(savedSessions);
+                    sessions = Array.isArray(raw) ? raw : [];
+                } catch {
+                    sessions = [];
+                }
+            }
+            if (savedCompleted) {
+                try {
+                    const raw = JSON.parse(savedCompleted);
+                    completedSessions = Array.isArray(raw) ? raw : [];
+                } catch {
+                    completedSessions = [];
+                }
+            }
+            if (savedStats) {
+                try { 
+                    stats = JSON.parse(savedStats) || stats; 
+                    // Ensure completedWeeks exists
+                    if (!stats.completedWeeks) stats.completedWeeks = 0;
+                    if (!stats.weekCompletionHistory) stats.weekCompletionHistory = [];
+                } catch {}
+            }
+            if (savedAchievements) {
+                try {
+                    const raw = JSON.parse(savedAchievements);
+                    achievements = Array.isArray(raw) ? raw : [];
+                } catch {
+                    achievements = [];
+                }
+            }
+            if (savedRewards) {
+                try {
+                    const raw = JSON.parse(savedRewards);
+                    rewards = Array.isArray(raw) ? raw : [];
+                } catch {
+                    rewards = [];
+                }
+            }
+            if (savedSubjectColors) {
+                try {
+                    subjectColors = JSON.parse(savedSubjectColors) || {};
+                } catch {
+                    subjectColors = {};
+                }
+            }
+
+            // Normalize sessions
+            sessions = sessions
+                .filter(s => s && s.startTime)
+                .map(s => {
+                    const normalizedSession = {
+                        id: s.id || String(Date.now()) + Math.random().toString(36).slice(2),
+                        subject: s.subject || 'Sin título',
+                        description: s.description || '',
+                        color: s.color || subjectColors[s.subject] || '#6c63ff',
+                        day: Number(s.day),
+                        startTime: s.startTime,
+                        duration: Number(s.duration) || 60
+                    };
+                    
+                    // Update subject color map
+                    if (!subjectColors[normalizedSession.subject]) {
+                        subjectColors[normalizedSession.subject] = normalizedSession.color;
+                    }
+                    
+                    return normalizedSession;
+                });
+
+            saveData();
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('studySessions', JSON.stringify(sessions));
+            localStorage.setItem('completedSessions', JSON.stringify(completedSessions));
+            localStorage.setItem('studyStats', JSON.stringify(stats));
+            localStorage.setItem('achievements', JSON.stringify(achievements));
+            localStorage.setItem('customRewards', JSON.stringify(rewards));
+            localStorage.setItem('subjectColors', JSON.stringify(subjectColors));
+        }
+
+        // Check if it's a new week and clean if necessary
+        function checkAndCleanWeek() {
+            const lastCleanDate = localStorage.getItem('lastWeekClean');
+            const now = new Date();
+            const weekStart = getWeekStartMonday(now);
+            
+            if (!lastCleanDate || new Date(lastCleanDate) < weekStart) {
+                // Check if there were sessions last week to count as a completed week
+                if (sessions.length > 0 && completedSessions.length > 0) {
+                    stats.completedWeeks++;
+                    stats.weekCompletionHistory.push({
+                        weekStart: getWeekStartMonday(new Date(lastCleanDate || now.setDate(now.getDate() - 7))),
+                        completedSessions: completedSessions.length
+                    });
+                }
+                
+                // Clear weekly data
+                sessions = [];
+                completedSessions = [];
+                
+                // Save clean date
+                localStorage.setItem('lastWeekClean', weekStart.toISOString());
+                
+                saveData();
+                showNotification('¡Nueva semana! El calendario ha sido limpiado. ¡Vamos por otra semana exitosa!', 'success');
+            }
+        }
+
+        // Generate Calendar
+        function generateCalendar() {
+            const calendar = document.getElementById('calendarGrid');
+            calendar.innerHTML = '';
+
+            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const todayIdx = new Date().getDay();
+
+            const orderedDays = [1, 2, 3, 4, 5, 6, 0];
+
+            orderedDays.forEach((day) => {
+                const daySessions = sessions
+                    .filter(s => Number(s.day) === day && s.startTime)
+                    .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+                let html = `
+                <div class="day-card" id="day-card-${day}">
+                    <div class="day-title">
+                        ${days[day]} ${todayIdx === day ? ' • Hoy' : ''}
+                    </div>
+                    <div class="day-column" id="day-col-${day}">
+                `;
+
+                if (daySessions.length === 0) {
+                    html += `<div class="text-secondary" style="font-size:.9rem;">Sin sesiones</div>`;
+                } else {
+                    daySessions.forEach(session => {
+                        const isCompleted = checkIfCompleted(session);
+                        const isMissed = checkIfMissed(session);
+                        const statusClass = isCompleted ? 'completed' : (isMissed ? 'missed' : '');
+                        
+                        html += `
+                        <div class="session-block ${statusClass}" 
+                             style="background: ${session.color || subjectColors[session.subject] || '#6c63ff'};"
+                             onclick="viewSessionDetails('${session.id}')">
+                            <strong>${session.subject}</strong><br>
+                            ${session.startTime} - ${calculateEndTime(session.startTime, session.duration)}
+                        </div>
+                        `;
+                    });
+                }
+
+                html += `
+                    </div>
+                </div>
+                `;
+
+                calendar.innerHTML += html;
+            });
+        }
+
+        function getWeekStartMonday(base = new Date()) {
+            const d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+            const mondayZero = (d.getDay() + 6) % 7;
+            d.setDate(d.getDate() - mondayZero);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function getSessionDateTimeThisWeek(dayIndex0Sun, startTime) {
+            const weekStart = getWeekStartMonday();
+            const mondayBased = (Number(dayIndex0Sun) + 6) % 7;
+            const dt = new Date(weekStart);
+            dt.setDate(weekStart.getDate() + mondayBased);
+            if (startTime) {
+                const [hh, mm] = startTime.split(':').map(Number);
+                dt.setHours(hh || 0, mm || 0, 0, 0);
+            } else {
+                dt.setHours(23, 59, 59, 999);
+            }
+            return dt;
+        }
+
+        function timeToMinutes(hhmm) {
+            const [h, m] = String(hhmm).split(':').map(Number);
+            return (h * 60) + (m || 0);
+        }
+
+        // Check if session is completed
+        function checkIfCompleted(session) {
+            return completedSessions.some(cs => 
+                cs.sessionId === session.id
+            );
+        }
+
+        // Check if session was missed
+        function checkIfMissed(session) {
+            if (checkIfCompleted(session)) return false;
+            
+            const when = getSessionDateTimeThisWeek(session.day, session.startTime);
+            const now = new Date();
+            return now.getTime() > when.getTime();
+        }
+
+        // Check current session
+        function checkCurrentSession() {
+            const now = new Date();
+            const currentDay = now.getDay();
+            
+            sessions.forEach(session => {
+                if (!session || !session.startTime) return false;
+                if (session.day == currentDay) {
+                    const sessionStart = new Date();
+                    const [hours, minutes] = session.startTime.split(':');
+                    sessionStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                    
+                    const sessionEnd = new Date(sessionStart);
+                    sessionEnd.setMinutes(sessionEnd.getMinutes() + 5); // 5 min tolerance
+                    
+                    if (now >= sessionStart && now <= sessionEnd && !checkIfCompleted(session)) {
+                        completeSession(session);
+                    }
+                    
+                    // Check for missed sessions
+                    if (now > sessionEnd && !checkIfCompleted(session)) {
+                        const alreadyNotified = localStorage.getItem(`notified_${session.id}`);
+                        if (!alreadyNotified) {
+                            showNotification(`Sesión no cumplida: ${session.subject}`, 'error');
+                            localStorage.setItem(`notified_${session.id}`, 'true');
+                        }
+                    }
+                }
+            });
+        }
+
+        // Complete a session
+        function completeSession(session) {
+            const completed = {
+                sessionId: session.id,
+                completedDate: new Date().toISOString(),
+                subject: session.subject,
+                duration: session.duration
+            };
+            
+            completedSessions.push(completed);
+            stats.totalCompleted++;
+            
+            // Update streak
+            const today = new Date().toDateString();
+            if (stats.lastCompletedDate !== today) {
+                const lastDate = stats.lastCompletedDate ? new Date(stats.lastCompletedDate) : null;
+                const daysDiff = lastDate ? Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24)) : 0;
+                
+                if (daysDiff === 1) {
+                    stats.streak++;
+                } else if (daysDiff > 1) {
+                    stats.streak = 1;
+                } else if (!lastDate) {
+                    stats.streak = 1;
+                }
+                
+                stats.lastCompletedDate = today;
+            }
+            
+            showNotification(`¡Sesión completada! ${session.subject}`, 'success');
+            checkAchievements();
+            saveData();
+            updateStats();
+            updateSubjectTracker();
+            updateRewardsList();
+            generateCalendar();
+            updateMotivationalMessage();
+        }
+
+        // Update subject time tracker
+        function updateSubjectTracker() {
+            const tracker = document.getElementById('subjectTracker');
+            const subjectTimes = {};
+            
+            // Calculate total time per subject
+            completedSessions.forEach(cs => {
+                if (!subjectTimes[cs.subject]) {
+                    subjectTimes[cs.subject] = 0;
+                }
+                subjectTimes[cs.subject] += cs.duration;
+            });
+            
+            if (Object.keys(subjectTimes).length === 0) {
+                tracker.innerHTML = '<p class="text-secondary">Aún no has completado sesiones esta semana.</p>';
+                return;
+            }
+            
+            let html = '';
+            for (const [subject, totalMinutes] of Object.entries(subjectTimes)) {
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                const timeDisplay = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+                const color = subjectColors[subject] || '#6c63ff';
+                
+                html += `
+                <div class="subject-item">
+                    <div class="subject-info">
+                        <div class="subject-color" style="background: ${color}"></div>
+                        <div class="subject-details">
+                            <h5>${subject}</h5>
+                            <p>Tiempo acumulado esta semana</p>
+                        </div>
+                    </div>
+                    <div class="subject-time">${timeDisplay}</div>
+                </div>
+                `;
+            }
+            
+            tracker.innerHTML = html;
+        }
+
+        // Add reward
+        function addReward() {
+            const subject = document.getElementById('rewardSubject').value;
+            const hours = parseInt(document.getElementById('rewardHours').value);
+            const text = document.getElementById('rewardText').value;
+            
+            if (!subject || !hours || !text) {
+                showNotification('Por favor completa todos los campos', 'error');
+                return;
+            }
+            
+            const reward = {
+                id: Date.now().toString(),
+                subject,
+                hoursRequired: hours,
+                rewardText: text
+            };
+            
+            rewards.push(reward);
+            saveData();
+            updateRewardsList();
+            
+            // Close modal
+            const modalElement = document.getElementById('addRewardModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.hide();
+            
+            // Reset form
+            document.getElementById('rewardForm').reset();
+            
+            showNotification('¡Recompensa agregada exitosamente!', 'success');
+        }
+
+        // Update rewards list
+        function updateRewardsList() {
+            const list = document.getElementById('rewardsList');
+            
+            if (rewards.length === 0) {
+                list.innerHTML = '<p class="text-secondary">No has agregado recompensas aún. ¡Crea una para motivarte!</p>';
+                return;
+            }
+            
+            let html = '';
+            rewards.forEach(reward => {
+                // Calculate progress
+                const weeklyMinutes = completedSessions
+                    .filter(cs => cs.subject === reward.subject)
+                    .reduce((sum, cs) => sum + cs.duration, 0);
+                const weeklyHours = weeklyMinutes / 60;
+                const progress = Math.min((weeklyHours / reward.hoursRequired) * 100, 100);
+                const isCompleted = progress >= 100;
+                
+                html += `
+                <div class="reward-item ${isCompleted ? 'completed' : ''}">
+                    <i class="fas fa-times delete-reward" onclick="deleteReward('${reward.id}')"></i>
+                    <h5>${reward.subject} - ${reward.hoursRequired}h semanales</h5>
+                    <p>${reward.rewardText}</p>
+                    <div class="reward-progress">
+                        <div class="reward-progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <small class="text-secondary">Progreso: ${weeklyHours.toFixed(1)}h / ${reward.hoursRequired}h (${Math.round(progress)}%)</small>
+                    ${isCompleted ? '<p class="text-success mt-2"><i class="fas fa-check-circle"></i> ¡Recompensa desbloqueada!</p>' : ''}
+                </div>
+                `;
+            });
+            
+            list.innerHTML = html;
+        }
+
+        // Delete reward
+        function deleteReward(rewardId) {
+            if (confirm('¿Estás seguro de eliminar esta recompensa?')) {
+                rewards = rewards.filter(r => r.id !== rewardId);
+                saveData();
+                updateRewardsList();
+                showNotification('Recompensa eliminada', 'success');
+            }
+        }
+
+        // Check achievements
+        function checkAchievements() {
+            const newAchievements = [];
+            
+            if (stats.totalCompleted === 1 && !hasAchievement('first_session')) {
+                newAchievements.push({id: 'first_session', name: '🎯 Primera Sesión', description: 'Completaste tu primera sesión'});
+            }
+            
+            if (stats.streak === 3 && !hasAchievement('streak_3')) {
+                newAchievements.push({id: 'streak_3', name: '🔥 Racha de 3 días', description: 'Estudiaste 3 días seguidos'});
+            }
+            
+            if (stats.streak === 7 && !hasAchievement('streak_7')) {
+                newAchievements.push({id: 'streak_7', name: '🌟 Semana Perfecta', description: 'Estudiaste 7 días seguidos'});
+            }
+            
+            if (stats.completedWeeks >= 4 && !hasAchievement('month_complete')) {
+                newAchievements.push({id: 'month_complete', name: '📅 Mes Completo', description: 'Completaste sesiones durante 4 semanas'});
+            }
+            
+            if (stats.totalCompleted >= 20 && !hasAchievement('20_sessions')) {
+                newAchievements.push({id: '20_sessions', name: '💪 20 Sesiones', description: 'Completaste 20 sesiones'});
+            }
+            
+            newAchievements.forEach(achievement => {
+                achievements.push(achievement);
+                showNotification(`¡Nuevo logro desbloqueado! ${achievement.name}`, 'achievement');
+            });
+            
+            updateAchievementsList();
+        }
+
+        // Check if has achievement
+        function hasAchievement(id) {
+            return achievements.some(a => a.id === id);
+        }
+
+        // Update achievements list
+        function updateAchievementsList() {
+            const list = document.getElementById('achievementsList');
+            if (achievements.length === 0) {
+                list.innerHTML = '<p class="text-secondary">Aún no has desbloqueado logros. ¡Completa sesiones para ganarlos!</p>';
+            } else {
+                list.innerHTML = achievements.map(a => 
+                    `<div class="achievement-badge" title="${a.description}">${a.name}</div>`
+                ).join('');
+            }
+        }
+
+        // Update stats display
+        function updateStats() {
+            document.getElementById('streakDays').textContent = stats.streak;
+            document.getElementById('completedSessions').textContent = stats.totalCompleted;
+            document.getElementById('completedWeeks').textContent = stats.completedWeeks;
+            document.getElementById('achievements').textContent = achievements.length;
+            
+            // Update weekly progress
+            const weeklyGoal = sessions.length;
+            const weeklyCompleted = completedSessions.length;
+            const progressPercent = weeklyGoal > 0 ? Math.round((weeklyCompleted / weeklyGoal) * 100) : 0;
+            
+            const progressBar = document.getElementById('weeklyProgress');
+            progressBar.style.width = progressPercent + '%';
+            document.getElementById('weeklyProgressText').textContent = progressPercent + '%';
+            
+            if (progressPercent == 0) progressBar.style.paddingLeft = '20px';
+            else progressBar.style.paddingLeft = '0px';
+            
+            updateAchievementsList();
+        }
+
+        // Update motivational message
+        function updateMotivationalMessage() {
+            const quote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+            document.getElementById('motivationalText').textContent = quote;
+        }
+
+        // Calculate end time
+        function calculateEndTime(startTime, duration) {
+            if (!startTime) return '';
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes + duration;
+            const endHours = Math.floor(totalMinutes / 60);
+            const endMinutes = totalMinutes % 60;
+            return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+        }
+
+        // Open add session modal
+        function openAddSessionModal() {
+            // Check if subject already has a color
+            const subject = document.getElementById('subject').value;
+            if (subject && subjectColors[subject]) {
+                selectedColor = subjectColors[subject];
+                // Update color picker selection
+                document.querySelectorAll('.color-option').forEach(opt => {
+                    if (opt.dataset.color === selectedColor) {
+                        opt.classList.add('selected');
+                    } else {
+                        opt.classList.remove('selected');
+                    }
+                });
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('addSessionModal'));
+            modal.show();
+        }
+
+        // Add new session
+        function addSession() {
+            const subject = document.getElementById('subject').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const day = parseInt(document.getElementById('day').value);
+            const startTime = document.getElementById('startTime').value;
+            const duration = parseInt(document.getElementById('duration').value);
+            
+            if (!subject || !startTime || !duration) {
+                showNotification('Por favor completa todos los campos obligatorios', 'error');
+                return;
+            }
+            
+            // Use existing color for subject if available
+            const color = subjectColors[subject] || selectedColor;
+            subjectColors[subject] = color;
+            
+            const session = {
+                id: Date.now().toString(),
+                subject,
+                description,
+                color,
+                day,
+                startTime,
+                duration
+            };
+            
+            sessions.push(session);
+            saveData();
+            generateCalendar();
+            updateSubjectTracker();
+            
+            // Close modal
+            const modalElement = document.getElementById('addSessionModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.hide();
+            
+            // Reset form
+            document.getElementById('sessionForm').reset();
+            
+            showNotification('¡Sesión agregada exitosamente!', 'success');
+        }
+
+        // View session details
+        function viewSessionDetails(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) return;
+            
+            currentViewingSessionId = sessionId;
+            
+            const isCompleted = checkIfCompleted(session);
+            const isMissed = checkIfMissed(session);
+            const status = isCompleted ? 'Completada ✅' : (isMissed ? 'No cumplida ❌' : 'Pendiente ⏳');
+            
+            const detailsHtml = `
+                <div class="session-color-indicator" style="background: ${session.color}"></div>
+                <h4>${session.subject}</h4>
+                <p><strong>Estado:</strong> ${status}</p>
+                <p><strong>Día:</strong> ${['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][session.day]}</p>
+                <p><strong>Horario:</strong> ${session.startTime} - ${calculateEndTime(session.startTime, session.duration)}</p>
+                <p><strong>Duración:</strong> ${session.duration} minutos</p>
+                ${session.description ? `<p><strong>Descripción:</strong><br>${session.description}</p>` : ''}
+            `;
+            
+            document.getElementById('sessionDetailsContent').innerHTML = detailsHtml;
+            
+            // Show/hide delete button based on status
+            const deleteBtn = document.getElementById('deleteSessionBtn');
+            deleteBtn.style.display = isCompleted ? 'none' : 'inline-block';
+            
+            const modal = new bootstrap.Modal(document.getElementById('sessionDetailsModal'));
+            modal.show();
+        }
+
+        // Delete session
+        function deleteSession() {
+            if (!currentViewingSessionId) return;
+            
+            if (confirm('¿Estás seguro de eliminar esta sesión?')) {
+                sessions = sessions.filter(s => s.id !== currentViewingSessionId);
+                
+                // Remove any notifications for this session
+                localStorage.removeItem(`notified_${currentViewingSessionId}`);
+                
+                saveData();
+                generateCalendar();
+                updateStats();
+                updateSubjectTracker();
+                updateRewardsList();
+                
+                // Close modal
+                const modalElement = document.getElementById('sessionDetailsModal');
+                const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+                modal.hide();
+                
+                showNotification('Sesión eliminada exitosamente', 'success');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            let icon = 'fa-check-circle';
+            
+            if (type === 'achievement') {
+                notification.style.background = 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)';
+                notification.style.color = 'var(--bg-primary)';
+                icon = 'fa-trophy';
+            } else if (type === 'error') {
+                notification.className += ' error';
+                icon = 'fa-circle-exclamation';
+            } else if (type === 'pendiente') {
+                notification.style.background = 'linear-gradient(135deg, var(--pending-dark) 0%, var(--pending) 100%)';
+                icon = 'fa-hourglass-half';
+            }
+            
+            notification.innerHTML = `
+                <i class="fas ${icon}"></i>
+                ${' ' + message}
+            `;
+            
+            document.getElementById('notificationContainer').appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideInRight 0.5s ease-out reverse';
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+
+        // Open add reward modal
+        function openAddRewardModal() {
+            const modal = new bootstrap.Modal(document.getElementById('addRewardModal'));
+            modal.show();
+        }
+
+        // Subject input change handler
+        document.getElementById('subject').addEventListener('input', function() {
+            const subject = this.value.trim();
+            if (subject && subjectColors[subject]) {
+                selectedColor = subjectColors[subject];
+                // Update color picker selection
+                document.querySelectorAll('.color-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                    if (opt.dataset.color === selectedColor) {
+                        opt.classList.add('selected');
+                    }
+                });
+            }
+        });
+
+        function resetAllData() {
+            
+            if (!confirm('¿Seguro que querés borrar todo tu progreso y datos guardados?')) return;
+            /*
+            // Borra solo las claves de la app (recomendado)
+            const keys = [
+                'studySessions',
+                'completedSessions',
+                'studyStats',
+                'achievements',
+                'customRewards',
+                'subjectColors',
+                'lastWeekClean',
+            ];
+            keys.forEach(k => localStorage.removeItem(k));
+
+            // Limpia notificaciones por sesión guardadas
+            Object.keys(localStorage)
+                .filter(k => k.startsWith('notified_'))
+                .forEach(k => localStorage.removeItem(k));
+
+            // Resetea estado en memoria
+            sessions = [];
+            completedSessions = [];
+            achievements = [];
+            rewards = [];
+            subjectColors = {};
+            stats = {
+                streak: 0,
+                totalCompleted: 0,
+                completedWeeks: 0,
+                lastCompletedDate: null,
+                weekCompletionHistory: []
+            };
+
+            // Persistir y re-renderizar UI
+            saveData();
+            generateCalendar();
+            updateStats();
+            updateSubjectTracker();
+            updateRewardsList();
+            updateAchievementsList();
+            updateMotivationalMessage();
+
+            showNotification('Datos borrados. ¡Empezá desde cero!', 'success');*/
+
+            // Alternativa: si querés borrar absolutamente TODO del sitio:
+            localStorage.clear(); 
+            location.reload();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateMotivationalMessage();
+        });
+
+    </script>
+</body>
+</html>
